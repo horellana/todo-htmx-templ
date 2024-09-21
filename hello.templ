@@ -1,0 +1,57 @@
+package main
+
+import (
+	"fmt"
+)
+
+templ Index(todos []Todo) {
+	<html lang="en">
+				<head>
+						<meta charset="UTF-8">
+						<meta name="viewport" content="width=device-width, initial-scale=1.0">
+						<meta http-equiv="X-UA-Compatible" content="IE=edge">
+						<title>Basic HTML Template</title>
+				</head>
+				<body>
+					@TodoInput("Try 'Buying Milk'")
+					@TodoList(todos)
+				</body>
+
+				<script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+		</html>
+}
+
+templ TodoInput(placeholder string) {
+	<input
+		type="text"
+		name="name"
+		placeholder={placeholder}
+		size={fmt.Sprintf("%d", len(placeholder))}
+		hx-post="/"
+		hx-swap="beforeend"
+		hx-trigger="keyup[key == 'Enter']"
+		hx-target="#todo-list"
+		/>
+}
+
+templ TodoRow(todo Todo) {
+		<li id={fmt.Sprintf("todo-row-%d", todo.Id)}>
+				{ todo.Name } -
+				<input
+						type="checkbox"
+						hx-put={fmt.Sprintf("/%d", todo.Id)}
+						hx-trigger="change"
+						hx-swap="outerHTML"
+						hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
+						hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
+						id={fmt.Sprintf("todo-%d", todo.Id)} if todo.Completed { checked } />
+		</li>
+}
+
+templ TodoList(todos []Todo) {
+	<ul id="todo-list">
+		for _, todo := range todos {
+			@TodoRow(todo)
+		}
+	</ul>
+}
