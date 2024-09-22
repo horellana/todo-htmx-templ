@@ -11,6 +11,8 @@ import (
 	schema "github.com/gorilla/schema"
 )
 
+const INPUT_PLACEHOLDER = "Try 'Buying Milk'"
+
 type Todo struct {
 	Id int
 	Name string
@@ -84,7 +86,7 @@ func CreateTodo(name string) Todo {
 func RootHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		todos := ListTodos()
-		component := Index(todos)
+		component := Index(todos, INPUT_PLACEHOLDER, "")
 		component.Render(context.Background(), w)
 	})
 }
@@ -135,7 +137,7 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 		if err != nil {
 			message := "Could not parse payload"
 			slog.Error("CREATE_TODO", "MESSAGE", message)
-			http.Error(w, message, http.StatusBadRequest)
+			TodoInput("Try 'Buy Milk'", message).Render(context.Background(), w)
 			return
 		}
 
@@ -145,7 +147,12 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 		if err != nil {
 			message := "Could not decode payload"
 			slog.Error("CREATE_TODO", "MESSAGE", message)
-			http.Error(w, message, http.StatusBadRequest)
+			TodoInput("Try 'Buy Milk'", message).Render(context.Background(), w)
+			return
+		}
+
+		if len(payload.Name) < 1 {
+			TodoInput("Try 'Buy Milk'", "TODO can not be empty").Render(context.Background(), w)
 			return
 		}
 
@@ -153,7 +160,7 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 
 		slog.Debug("CREATE_TODO", "MESSAGE", todo)
 
-		component := TodoList(ListTodos())
+		component := NewTodoOOB(todo)
 		component.Render(context.Background(), w)
 	})
 }
