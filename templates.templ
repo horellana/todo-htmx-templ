@@ -29,18 +29,23 @@ templ Index(todos []Todo) {
 
 templ TodoInput(placeholder string) {
 	<div class="flex items-center">
-		<input
-						required="true"
-						type="text"
-						name="name"
-						class="w-full text-left border p-4 shrink-0"
-						placeholder={placeholder}
-						hx-post="/todos"
-						hx-swap="outerHTML"
-						hx-trigger="keyup[key == 'Enter']"
-						hx-target="#todo-list"
-						hx-indicator="#loading-indicator"
-				/>
+		<form
+		 name="create-todo-form"
+		 class="w-full shrink-0"
+		 hx-post="/todos"
+		 hx-swap="outerHTML"
+		 hx-trigger="keyup[key == 'Enter']"
+		 hx-target="#todo-list"
+		 hx-indicator="#loading-indicator"
+			>
+			<input
+			 required
+			 type="text"
+			 name="name"
+			 class="w-full text-left border p-4 shrink-0"
+			 placeholder={placeholder}
+			 />
+		</form>
 
 		<div id="loading-indicator" role="status" class="htmx-indicator mx-4 flex-none">
 			<!-- https://flowbite.com/docs/components/spinner/ -->
