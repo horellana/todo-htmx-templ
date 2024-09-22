@@ -131,6 +131,21 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 		slog.Debug("CREATE_TODO", "MESSAGE", todo)
 
 		component := TodoRow(todo)
+
+func DeleteTodoHandler(decoder *schema.Decoder) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		todoId, todoIdErr := strconv.Atoi(r.PathValue("id"))
+
+		if todoIdErr != nil {
+			message := fmt.Sprintf("Bad todo id: %s", r.PathValue("id"))
+			slog.Error("DELETE_TODO", "MESSAGE", message)
+			http.Error(w, message, http.StatusBadRequest)
+			return
+		}
+
+		todos := RemoveTodo(todoId, TODOS)
+		component := TodoList(todos)
+
 		component.Render(context.Background(), w)
 	})
 }
@@ -154,6 +169,7 @@ func main() {
 	server.Handle("GET /todos", RootHandler())
 	server.Handle("POST /todos", CreateTodoHandler(decoder))
 	server.Handle("PUT /todos/{id}", UpdateTodoHandler(decoder))
+	server.Handle("DELETE /todos/{id}", DeleteTodoHandler(decoder))
 
 	http.ListenAndServe("0.0.0.0:3000", server)
 }
