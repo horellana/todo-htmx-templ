@@ -21,11 +21,6 @@ templ Index(todos []Todo) {
 		<body class="flex justify-center">
 			<div class="w-full max-w-lg p-8">
 				@TodoInput("Try 'Buying Milk'")
-
-				<p class="text-center p-4 mb-4 border-b">
-					Todos
-				</p>
-
 				@TodoList(todos)
 			</div>
 		</body>
@@ -33,41 +28,93 @@ templ Index(todos []Todo) {
 }
 
 templ TodoInput(placeholder string) {
-	<input
-		type="text"
-		name="name"
-		class="w-full text-left border p-4"
-		placeholder={placeholder}
-		hx-post="/todos"
-		hx-swap="beforeend"
-		hx-trigger="keyup[key == 'Enter']"
-		hx-target="#todo-list"
-		/>
+	<div class="flex items-center">
+		<input
+						required="true"
+						type="text"
+						name="name"
+						class="w-full text-left border p-4 shrink-0"
+						placeholder={placeholder}
+						hx-post="/todos"
+						hx-swap="outerHTML"
+						hx-trigger="keyup[key == 'Enter']"
+						hx-target="#todo-list"
+						hx-indicator="#loading-indicator"
+				/>
+
+		<label id="loading-indicator" class="htmx-indicator mx-4 flex-none">
+			Loading...
+		</label>
+	</div>
+}
+
+func GetTodoRowClass(todo Todo) string {
+	result := "border p-4 mb-1"
+
+	if (todo.Completed) {
+		result = fmt.Sprintf("%s border-green-500", result)
+	}
+
+	return result
 }
 
 templ TodoRow(todo Todo) {
-		<li id={fmt.Sprintf("todo-row-%d", todo.Id)} class="border p-4">
-				<div class="flex items-center">
-						<input
-								type="checkbox"
-								hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
-								hx-trigger="change"
-								hx-swap="outerHTML"
-								hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
-								hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
-								id={fmt.Sprintf("todo-%d", todo.Id)} if todo.Completed { checked } />
+		<li id={fmt.Sprintf("todo-row-%d", todo.Id)} class={GetTodoRowClass(todo)}>
+				<div class="flex items-center justify-between">
+						<div class="flex items-center">
+								<input
+										type="checkbox"
+										hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
+										hx-indicator="#loading-indicator"
+										hx-trigger="change"
+										hx-swap="outerHTML"
+										hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
+										hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
+										id={fmt.Sprintf("todo-%d", todo.Id)} if todo.Completed { checked } />
 
-						<p class="ml-5">
-								{ todo.Name }
-						</p>
+								<div>
+										<label class="ml-5">
+												{ todo.Name }
+										</label>
+
+										if todo.Completed && todo.CompletedAt != "" {
+												<p>
+														<label class="text-sm text-gray-500 ml-5 mt-2">
+																Completed at { todo.CompletedAt }
+														</label>
+												</p>
+										}
+								</div>
+						</div>
+
+						<div>
+								<label
+										class="cursor-pointer text-red-500 select-none"
+										hx-delete={fmt.Sprintf("/todos/%d", todo.Id)}
+										hx-indicator="#loading-indicator"
+										hx-target="#todo-list"
+								>
+										Remove
+								</label>
+						</div>
 				</div>
 		</li>
 }
 
 templ TodoList(todos []Todo) {
-	<ul id="todo-list">
-		for _, todo := range todos {
-			@TodoRow(todo)
-		}
-	</ul>
+		<div id="todo-list">
+				<p class="text-center p-4 mb-4">
+						if len(todos) > 0 {
+								Todos
+						} else {
+								No TODOS available
+						}
+				</p>
+
+				<ul>
+						for _, todo := range todos {
+						@TodoRow(todo)
+				}
+				</ul>
+		</div>
 }

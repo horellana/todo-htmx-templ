@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"fmt"
+	"time"
 	"context"
 	"strconv"
 	"log/slog"
@@ -14,6 +15,7 @@ type Todo struct {
 	Id int
 	Name string
 	Completed bool
+	CompletedAt string
 }
 
 var TODOS = []Todo{
@@ -26,6 +28,7 @@ var TODOS = []Todo{
 		Id: 2,
 		Name: "Todo 2",
 		Completed: true,
+		CompletedAt: time.Now().Format("2006-01-02 15:04:05"),
 	},
 }
 
@@ -41,8 +44,28 @@ func ListTodos() []Todo {
 	return TODOS
 }
 
+func RemoveTodo(todoId int, todos []Todo) []Todo {
+	result := []Todo{}
+
+	for _, todo := range todos {
+		if todo.Id != todoId {
+			result = append(result, todo)
+		}
+	}
+
+	TODOS = result
+	return result
+}
+
 func UpdateTodo(todoId int, completed bool) Todo {
 	TODOS[todoId - 1].Completed = completed
+
+	if (completed) {
+		TODOS[todoId - 1].CompletedAt = time.Now().Format("2006-01-02 15:04:05")
+	} else {
+		TODOS[todoId - 1].CompletedAt = ""
+	}
+
 	return TODOS[todoId - 1]
 }
 
@@ -130,7 +153,10 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 
 		slog.Debug("CREATE_TODO", "MESSAGE", todo)
 
-		component := TodoRow(todo)
+		component := TodoList(ListTodos())
+		component.Render(context.Background(), w)
+	})
+}
 
 func DeleteTodoHandler(decoder *schema.Decoder) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
