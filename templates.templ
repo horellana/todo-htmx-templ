@@ -112,7 +112,8 @@ templ TodoRow(todo Todo) {
 										class="cursor-pointer text-red-500 select-none"
 										hx-delete={fmt.Sprintf("/todos/%d", todo.Id)}
 										hx-indicator="#loading-indicator"
-										hx-target="#todo-list"
+										hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
+										hx-swap="outerHTML"
 								>
 										Remove
 								</label>
@@ -124,6 +125,10 @@ templ TodoRow(todo Todo) {
 templ NewTodoOOB(todo Todo) {
 		@TodoInput("Try 'Buy Milk'", "")
 
+		<div hx-swap-oob="innerHTML:#todo-list-label">
+				Todos
+		</div>
+
 		<div hx-swap-oob="beforeend:#todo-list">
 				@TodoRow(todo)
 		</div>
@@ -131,7 +136,7 @@ templ NewTodoOOB(todo Todo) {
 
 templ TodoList(todos []Todo) {
 		<div>
-				<p class="text-center p-4 mb-4">
+				<p id="todo-list-label" class="text-center p-4 mb-4">
 						if len(todos) > 0 {
 								Todos
 						} else {
@@ -145,4 +150,12 @@ templ TodoList(todos []Todo) {
 						}
 				</ul>
 		</div>
+}
+
+templ RemoveTodoOOB(todoId int, todos []Todo) {
+		if len(todos) < 1 {
+				<div hx-swap-oob="innerText:#todo-list-label">
+						No TODOS available
+				</div>
+		}
 }

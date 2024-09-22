@@ -177,9 +177,8 @@ func DeleteTodoHandler(decoder *schema.Decoder) http.Handler {
 		}
 
 		todos := RemoveTodo(todoId, TODOS)
-		component := TodoList(todos)
 
-		component.Render(context.Background(), w)
+		RemoveTodoOOB(todoId, todos).Render(context.Background(), w)
 	})
 }
 
