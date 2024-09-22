@@ -177,6 +177,7 @@ func DeleteTodoHandler(decoder *schema.Decoder) http.Handler {
 		}
 
 		todos := RemoveTodo(todoId, TODOS)
+		slog.Error("DELETE_TODO", "TODO_ID", todoId)
 
 		RemoveTodoOOB(todoId, todos).Render(context.Background(), w)
 	})
@@ -203,5 +204,15 @@ func main() {
 	server.Handle("PUT /todos/{id}", UpdateTodoHandler(decoder))
 	server.Handle("DELETE /todos/{id}", DeleteTodoHandler(decoder))
 
-	http.ListenAndServe("0.0.0.0:3000", server)
+	port := os.Getenv("PORT")
+
+	if len(port) < 1 {
+		port = "3000"
+	}
+
+	listenAddress := fmt.Sprintf("0.0.0.0:%s", port)
+
+	slog.Debug("MAIN", "LISTEN ADDRESS", listenAddress)
+
+	http.ListenAndServe(listenAddress, server)
 }

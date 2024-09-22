@@ -134,6 +134,14 @@ templ NewTodoOOB(todo Todo) {
 		</div>
 }
 
+templ RemoveTodoOOB(todoId int, todos []Todo) {
+		if len(todos) < 1 {
+				<div hx-swap-oob="innerText:#todo-list-label">
+						No TODOS available
+				</div>
+		}
+}
+
 templ TodoList(todos []Todo) {
 		<div>
 				<p id="todo-list-label" class="text-center p-4 mb-4">
@@ -150,12 +158,4 @@ templ TodoList(todos []Todo) {
 						}
 				</ul>
 		</div>
-}
-
-templ RemoveTodoOOB(todoId int, todos []Todo) {
-		if len(todos) < 1 {
-				<div hx-swap-oob="innerText:#todo-list-label">
-						No TODOS available
-				</div>
-		}
 }
