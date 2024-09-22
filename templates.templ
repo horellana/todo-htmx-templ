@@ -1,0 +1,73 @@
+package main
+
+import (
+	"fmt"
+)
+
+templ Index(todos []Todo) {
+	<html lang="en">
+		<script defer src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+
+		<head>
+			<meta charset="UTF-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+			<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+			<link href="./static/output.css" rel="stylesheet"/>
+			<title>
+				TODO App
+			</title>
+		</head>
+
+		<body class="flex justify-center">
+			<div class="w-full max-w-lg p-8">
+				@TodoInput("Try 'Buying Milk'")
+
+				<p class="text-center p-4 mb-4 border-b">
+					Todos
+				</p>
+
+				@TodoList(todos)
+			</div>
+		</body>
+	</html>
+}
+
+templ TodoInput(placeholder string) {
+	<input
+		type="text"
+		name="name"
+		class="w-full text-left border p-4"
+		placeholder={placeholder}
+		hx-post="/todos"
+		hx-swap="beforeend"
+		hx-trigger="keyup[key == 'Enter']"
+		hx-target="#todo-list"
+		/>
+}
+
+templ TodoRow(todo Todo) {
+		<li id={fmt.Sprintf("todo-row-%d", todo.Id)} class="border p-4">
+				<div class="flex items-center">
+						<input
+								type="checkbox"
+								hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
+								hx-trigger="change"
+								hx-swap="outerHTML"
+								hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
+								hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
+								id={fmt.Sprintf("todo-%d", todo.Id)} if todo.Completed { checked } />
+
+						<p class="ml-5">
+								{ todo.Name }
+						</p>
+				</div>
+		</li>
+}
+
+templ TodoList(todos []Todo) {
+	<ul id="todo-list">
+		for _, todo := range todos {
+			@TodoRow(todo)
+		}
+	</ul>
+}

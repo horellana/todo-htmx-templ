@@ -37,87 +37,102 @@ type CreateTodoPayload struct {
 	Name string `schema:name`
 }
 
-func RootHandler(w http.ResponseWriter, r *http.Request) {
-	component := Index(TODOS)
-	component.Render(context.Background(), w)
+func ListTodos() []Todo {
+	return TODOS
 }
 
-func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
-	err :=  r.ParseForm()
-
-	if err != nil {
-		message := "Could not parse payload"
-		slog.Error("UPDATE_TODO", "MESSAGE", message)
-		http.Error(w, message, http.StatusBadRequest)
-		return
-	}
-
-	payload := new(UpdateTodoPayload)
-	decoder := schema.NewDecoder()
-
-	err = decoder.Decode(payload, r.Form)
-
-	if err != nil {
-		message := "Could not decode payload"
-		slog.Error("UPDATE_TODO", "MESSAGE", message)
-		http.Error(w, message, http.StatusBadRequest)
-		return
-	}
-
-	todoId, todoIdErr := strconv.Atoi(r.PathValue("id"))
-
-	if todoIdErr != nil {
-		message := fmt.Sprintf("Bad todo id: %s", r.PathValue("id"))
-		slog.Error("UPDATE_TODO", "MESSAGE", message)
-		http.Error(w, message, http.StatusBadRequest)
-		return
-	}
-
-	slog.Debug("UPDATE_TODO", "REQUEST_PAYLOAD", payload)
-
-	TODOS[todoId - 1].Completed = payload.Completed
-
-	slog.Debug("UPDATE_TODO", "REQUEST_PAYLOAD", TODOS)
-
-	component := TodoRow(TODOS[todoId - 1])
-	component.Render(context.Background(), w)
+func UpdateTodo(todoId int, completed bool) Todo {
+	TODOS[todoId - 1].Completed = completed
+	return TODOS[todoId - 1]
 }
 
-func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
-	err :=  r.ParseForm()
-
-	if err != nil {
-		message := "Could not parse payload"
-		slog.Error("CREATE_TODO", "MESSAGE", message)
-		http.Error(w, message, http.StatusBadRequest)
-		return
-	}
-
-	payload := new(CreateTodoPayload)
-	decoder := schema.NewDecoder()
-
-	err = decoder.Decode(payload, r.Form)
-
-	if err != nil {
-		message := "Could not decode payload"
-		slog.Error("CREATE_TODO", "MESSAGE", message)
-		http.Error(w, message, http.StatusBadRequest)
-		return
-	}
-
+func CreateTodo(name string) Todo {
 	todo := Todo{
 		Id: len(TODOS) + 1,
-		Name: payload.Name,
+		Name: name,
 		Completed: false,
 	}
 
-	slog.Debug("CREATE_TODO", "MESSAGE", todo)
-
-	component := TodoRow(todo)
-
 	TODOS = append(TODOS, todo)
 
-	component.Render(context.Background(), w)
+	return todo
+}
+
+func RootHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		todos := ListTodos()
+		component := Index(todos)
+		component.Render(context.Background(), w)
+	})
+}
+
+func UpdateTodoHandler(decoder *schema.Decoder) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err :=  r.ParseForm()
+
+		if err != nil {
+			message := "Could not parse payload"
+			slog.Error("UPDATE_TODO", "MESSAGE", message)
+			http.Error(w, message, http.StatusBadRequest)
+			return
+		}
+
+		payload := new(UpdateTodoPayload)
+		err = decoder.Decode(payload, r.Form)
+
+		if err != nil {
+			message := "Could not decode payload"
+			slog.Error("UPDATE_TODO", "MESSAGE", message)
+			http.Error(w, message, http.StatusBadRequest)
+			return
+		}
+
+		todoId, todoIdErr := strconv.Atoi(r.PathValue("id"))
+
+		if todoIdErr != nil {
+			message := fmt.Sprintf("Bad todo id: %s", r.PathValue("id"))
+			slog.Error("UPDATE_TODO", "MESSAGE", message)
+			http.Error(w, message, http.StatusBadRequest)
+			return
+		}
+
+		slog.Debug("UPDATE_TODO", "REQUEST_PAYLOAD", payload)
+
+		newTodo := UpdateTodo(todoId, payload.Completed)
+
+		component := TodoRow(newTodo)
+		component.Render(context.Background(), w)
+	})
+}
+
+func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err :=  r.ParseForm()
+
+		if err != nil {
+			message := "Could not parse payload"
+			slog.Error("CREATE_TODO", "MESSAGE", message)
+			http.Error(w, message, http.StatusBadRequest)
+			return
+		}
+
+		payload := new(CreateTodoPayload)
+		err = decoder.Decode(payload, r.Form)
+
+		if err != nil {
+			message := "Could not decode payload"
+			slog.Error("CREATE_TODO", "MESSAGE", message)
+			http.Error(w, message, http.StatusBadRequest)
+			return
+		}
+
+		todo := CreateTodo(payload.Name)
+
+		slog.Debug("CREATE_TODO", "MESSAGE", todo)
+
+		component := TodoRow(todo)
+		component.Render(context.Background(), w)
+	})
 }
 
 func main() {
@@ -128,11 +143,17 @@ func main() {
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
 
+	decoder := schema.NewDecoder()
+
 	server := http.NewServeMux()
 
-	server.Handle("GET /", http.HandlerFunc(RootHandler))
-	server.Handle("POST /", http.HandlerFunc(CreateTodoHandler))
-	server.Handle("PUT /{id}", http.HandlerFunc(UpdateTodoHandler))
+	staticFilesHandler := http.FileServer(http.Dir("./static"))
+
+	server.Handle("/static/", http.StripPrefix("/static", staticFilesHandler))
+
+	server.Handle("GET /todos", RootHandler())
+	server.Handle("POST /todos", CreateTodoHandler(decoder))
+	server.Handle("PUT /todos/{id}", UpdateTodoHandler(decoder))
 
 	http.ListenAndServe("0.0.0.0:3000", server)
 }
