@@ -137,7 +137,7 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 		if err != nil {
 			message := "Could not parse payload"
 			slog.Error("CREATE_TODO", "MESSAGE", message)
-			TodoInput("Try 'Buy Milk'", message).Render(context.Background(), w)
+			NewTodoErrorOOB(INPUT_PLACEHOLDER, message).Render(context.Background(), w)
 			return
 		}
 
@@ -147,12 +147,12 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 		if err != nil {
 			message := "Could not decode payload"
 			slog.Error("CREATE_TODO", "MESSAGE", message)
-			TodoInput("Try 'Buy Milk'", message).Render(context.Background(), w)
+			NewTodoErrorOOB(INPUT_PLACEHOLDER, message).Render(context.Background(), w)
 			return
 		}
 
 		if len(payload.Name) < 1 {
-			TodoInput("Try 'Buy Milk'", "TODO can not be empty").Render(context.Background(), w)
+			NewTodoErrorOOB(INPUT_PLACEHOLDER, "TODO can not be empty").Render(context.Background(), w)
 			return
 		}
 
@@ -160,7 +160,7 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 
 		slog.Debug("CREATE_TODO", "MESSAGE", todo)
 
-		component := NewTodoOOB(todo)
+		component := NewTodoOOB(INPUT_PLACEHOLDER, todo)
 		component.Render(context.Background(), w)
 	})
 }

@@ -18,7 +18,10 @@ templ Index(todos []Todo, inputPlaceholder string, validationError string) {
 
 		<body class="flex justify-center">
 			<div class="w-full max-w-lg p-8">
-				@TodoInput(inputPlaceholder, validationError)
+				<div class="flex items-center">
+					@TodoInput(inputPlaceholder, validationError)
+					@LoadingIndicator()
+				</div>
 				@TodoList(todos)
 			</div>
 		</body>
@@ -38,33 +41,28 @@ templ LoadingIndicator() {
 	</div>
 }
 
+templ ValidationError(message string) {
+	<p id="validation-error" class="mt-2 text-center">
+		<label class="text-red-500">
+			{ message }
+		</label>
+	</p>
+}
+
 templ TodoInput(placeholder string, validationError string) {
-	<div id="todo-input">
-		<div class="flex items-center">
-			<input
-			 autofocus
-			 type="text"
-			 name="name"
-			 class="w-full text-left border p-4 shrink-0"
-			 placeholder={placeholder}
-			 hx-trigger="keyup[key == 'Enter']"
-			 hx-post="/todos"
-			 hx-swap="outerHTML"
-			 hx-trigger="submit"
-			 hx-target="#todo-input"
-			 hx-indicator="#loading-indicator"
-			 />
-
-			@LoadingIndicator()
-		</div>
-
-		<p id="validation-error" class="mt-2 text-center">
-			if len(validationError) > 0 {
-				<label class="text-red-500">
-					{ validationError }
-				</label>
-			}
-		</p>
+	<div id="todo-input" class="w-full shrink-0">
+		<input
+		 autofocus
+		 type="text"
+		 name="name"
+		 class="w-full text-left border p-4 shrink-0"
+		 placeholder={placeholder}
+		 hx-trigger="keyup[key == 'Enter']"
+		 hx-post="/todos"
+		 hx-swap="outerHTML"
+		 hx-target="this"
+		 hx-indicator="#loading-indicator"
+		 />
 	</div>
 }
 
@@ -122,8 +120,8 @@ templ TodoRow(todo Todo) {
 		</li>
 }
 
-templ NewTodoOOB(todo Todo) {
-		@TodoInput("Try 'Buy Milk'", "")
+templ NewTodoOOB(inputPlaceholder string, todo Todo) {
+		@TodoInput(inputPlaceholder, "")
 
 		<div hx-swap-oob="innerHTML:#todo-list-label">
 				Todos
@@ -131,6 +129,17 @@ templ NewTodoOOB(todo Todo) {
 
 		<div hx-swap-oob="beforeend:#todo-list">
 				@TodoRow(todo)
+		</div>
+
+		<div hx-swap-oob="innerHTML:#validation-error">
+		</div>
+}
+
+templ NewTodoErrorOOB(inputPlaceholder string, errorMessage string) {
+		@TodoInput(inputPlaceholder, "")
+
+		<div hx-swap-oob="beforeend:#todo-input">
+				@ValidationError(errorMessage)
 		</div>
 }
 
