@@ -93,41 +93,42 @@ func GetTodoRowClass(todo Todo) string {
 	return result
 }
 
-templ TodoRow(todo Todo) {
-		<li
-		 id={fmt.Sprintf("todo-row-%d", todo.Id)} class={GetTodoRowClass(todo)}
-		 hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
-		 hx-indicator="#loading-indicator"
-		 hx-trigger="click"
-		 hx-swap="outerHTML"
-		 hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
-		 hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}>
+templ TodoCheckbox(todo Todo) {
+		<input
+				type="checkbox"
+				hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
+				hx-indicator="#loading-indicator"
+				hx-trigger="change"
+				hx-swap="outerHTML"
+				hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
+				hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
+				id={fmt.Sprintf("todo-%d", todo.Id)} if todo.Completed { checked } />
+}
 
+templ TodoLabel(todo Todo) {
+		<label class="ml-5">
+				{ todo.Name }
+		</label>
+}
+
+templ TodoCompletedAtLabel(todo Todo) {
+		if todo.Completed && todo.CompletedAt != "" {
+				<p>
+						<label class="text-sm text-gray-500 ml-5 mt-2">
+								Completed at { todo.CompletedAt }
+						</label>
+				</p>
+		}
+}
+
+templ TodoRow(todo Todo) {
+		<li id={fmt.Sprintf("todo-row-%d", todo.Id)} class={GetTodoRowClass(todo)}>
 				<div class="flex items-center justify-between">
 						<div class="flex items-center">
-
-								<input
-										type="checkbox"
-										hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
-										hx-indicator="#loading-indicator"
-										hx-trigger="change"
-										hx-swap="outerHTML"
-										hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
-										hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
-										id={fmt.Sprintf("todo-%d", todo.Id)} if todo.Completed { checked } />
-
 								<div>
-										<label class="ml-5">
-												{ todo.Name }
-										</label>
-
-										if todo.Completed && todo.CompletedAt != "" {
-												<p>
-														<label class="text-sm text-gray-500 ml-5 mt-2">
-																Completed at { todo.CompletedAt }
-														</label>
-												</p>
-										}
+										@TodoCheckbox(todo)
+										@TodoLabel(todo)
+										@TodoCompletedAtLabel(todo)
 								</div>
 						</div>
 						@TrashIcon(todo)
