@@ -10,7 +10,7 @@ templ Index(todos []Todo, inputPlaceholder string, validationError string) {
 			<meta charset="UTF-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 			<link defer rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
-			<link defer href="./static/output.css" rel="stylesheet"/>
+			<link href="./static/output.css" rel="stylesheet"/>
 			<title>
 				TODO App
 			</title>
@@ -18,15 +18,14 @@ templ Index(todos []Todo, inputPlaceholder string, validationError string) {
 
 		<body class="flex justify-center">
 			<div class="w-full max-w-lg p-8">
-				<div class="flex items-center">
 					@TodoInput(inputPlaceholder, validationError)
+					@ValidationError("")
 					@LoadingIndicator()
-				</div>
 				@TodoList(todos)
 			</div>
 		</body>
 
-			<script defer src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
+			<script src="https://unpkg.com/htmx.org@2.0.2" integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ" crossorigin="anonymous"></script>
 	</html>
 }
 
@@ -50,20 +49,20 @@ templ ValidationError(message string) {
 }
 
 templ TodoInput(placeholder string, validationError string) {
-	<div id="todo-input" class="w-full shrink-0">
-		<input
-		 autofocus
-		 type="text"
-		 name="name"
-		 class="w-full text-left border p-4 shrink-0"
-		 placeholder={placeholder}
-		 hx-trigger="keyup[key == 'Enter']"
-		 hx-post="/todos"
-		 hx-swap="outerHTML"
-		 hx-target="this"
-		 hx-indicator="#loading-indicator"
-		 />
-	</div>
+		<div id="todo-input" class="w-full shrink-0">
+			<input
+			 autofocus
+			 type="text"
+			 name="name"
+			 class="w-full text-left border p-4 shrink-0"
+			 placeholder={placeholder}
+			 hx-trigger="keyup[key == 'Enter']"
+			 hx-post="/todos"
+			 hx-swap="outerHTML"
+			 hx-target="#todo-input"
+			 hx-indicator="#loading-indicator"
+			 />
+		</div>
 }
 
 func GetTodoRowClass(todo Todo) string {
@@ -131,14 +130,14 @@ templ NewTodoOOB(inputPlaceholder string, todo Todo) {
 				@TodoRow(todo)
 		</div>
 
-		<div hx-swap-oob="innerHTML:#validation-error">
+		<div hx-swap-oob="delete:#validation-error">
 		</div>
 }
 
 templ NewTodoErrorOOB(inputPlaceholder string, errorMessage string) {
 		@TodoInput(inputPlaceholder, "")
 
-		<div hx-swap-oob="beforeend:#todo-input">
+		<div hx-swap-oob="outerHTML:#validation-error">
 				@ValidationError(errorMessage)
 		</div>
 }
