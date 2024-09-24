@@ -85,14 +85,19 @@ func CreateTodo(name string) Todo {
 
 func RootHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/html")
+
 		todos := ListTodos()
 		component := Index(todos, INPUT_PLACEHOLDER, "")
+
 		component.Render(context.Background(), w)
 	})
 }
 
 func UpdateTodoHandler(decoder *schema.Decoder) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/html")
+
 		err :=  r.ParseForm()
 
 		if err != nil {
@@ -126,6 +131,8 @@ func UpdateTodoHandler(decoder *schema.Decoder) http.Handler {
 		newTodo := UpdateTodo(todoId, payload.Completed)
 
 		component := TodoRow(newTodo)
+
+
 		component.Render(context.Background(), w)
 	})
 }
@@ -152,6 +159,7 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 		}
 
 		if len(payload.Name) < 1 {
+			slog.Error("CREATE_TODO", "MESSAGE", "TODO can not be empty")
 			NewTodoErrorOOB(INPUT_PLACEHOLDER, "TODO can not be empty").Render(context.Background(), w)
 			return
 		}
@@ -161,6 +169,8 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 		slog.Debug("CREATE_TODO", "MESSAGE", todo)
 
 		component := NewTodoOOB(INPUT_PLACEHOLDER, todo)
+
+		w.Header().Add("Content-Type", "text/html")
 		component.Render(context.Background(), w)
 	})
 }
@@ -179,6 +189,7 @@ func DeleteTodoHandler(decoder *schema.Decoder) http.Handler {
 		todos := RemoveTodo(todoId, TODOS)
 		slog.Error("DELETE_TODO", "TODO_ID", todoId)
 
+		w.Header().Add("Content-Type", "text/html")
 		RemoveTodoOOB(todoId, todos).Render(context.Background(), w)
 	})
 }
