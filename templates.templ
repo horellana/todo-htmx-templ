@@ -18,7 +18,7 @@ templ Index(todos []Todo, inputPlaceholder string, validationError string) {
 
 		<body class="flex justify-center">
 			<div class="w-full max-w-lg p-8">
-				<div class="flex">
+				<div class="flex items-center w-full justify-left">
 					@TodoInput(inputPlaceholder, validationError)
 					@LoadingIndicator()
 				</div>
@@ -44,7 +44,6 @@ templ LoadingIndicator() {
 }
 
 templ TrashIcon(todo Todo) {
-
 	<svg
 		class="cursor-pointer text-red-500 fill-current select-none w-6 h-6"
 		hx-delete={fmt.Sprintf("/todos/%d", todo.Id)}
