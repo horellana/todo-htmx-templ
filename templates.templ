@@ -18,10 +18,13 @@ templ Index(todos []Todo, inputPlaceholder string, validationError string) {
 
 		<body class="flex justify-center">
 			<div class="w-full max-w-lg p-8">
+				<div class="flex">
 					@TodoInput(inputPlaceholder, validationError)
-					@ValidationError("")
 					@LoadingIndicator()
-				@TodoList(todos)
+				</div>
+
+					@ValidationError("")
+					@TodoList(todos)
 			</div>
 		</body>
 
@@ -38,6 +41,22 @@ templ LoadingIndicator() {
 		</svg>
 		<span class="sr-only">Loading...</span>
 	</div>
+}
+
+templ TrashIcon(todo Todo) {
+
+	<svg
+		class="cursor-pointer text-red-500 fill-current select-none w-6 h-6"
+		hx-delete={fmt.Sprintf("/todos/%d", todo.Id)}
+		hx-indicator="#loading-indicator"
+		hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
+		hx-swap="delete"
+		xmlns="http://www.w3.org/2000/svg"
+		id={fmt.Sprintf("trash-icon-todo-%d", todo.Id)}
+		data-name={fmt.Sprintf("trash-icon-todo-%d", todo.Id)}
+		viewBox="0 0 24 24">
+		<path d="m8.031,17.262l3.262-3.262-3.262-3.262.707-.707,3.262,3.262,3.262-3.262.707.707-3.262,3.262,3.262,3.262-.707.707-3.262-3.262-3.262,3.262-.707-.707Zm14.969-12.262h-1.552l-1.833,16.772c-.14,1.27-1.208,2.228-2.485,2.228H6.835c-1.281,0-2.35-.96-2.486-2.233L2.551,5h-1.551v-1h6v-1.5c0-1.379,1.122-2.5,2.5-2.5h5c1.378,0,2.5,1.121,2.5,2.5v1.5h6v1Zm-15-1h8v-1.5c0-.827-.673-1.5-1.5-1.5h-5c-.827,0-1.5.673-1.5,1.5v1.5Zm12.442,1H3.556l1.787,16.659c.082.765.723,1.341,1.492,1.341h10.294c.767,0,1.408-.574,1.491-1.337l1.821-16.663Z"/>
+	</svg>
 }
 
 templ ValidationError(message string) {
@@ -66,7 +85,7 @@ templ TodoInput(placeholder string, validationError string) {
 }
 
 func GetTodoRowClass(todo Todo) string {
-	result := "border p-4 mb-1"
+	result := "border p-4 mb-1 hover:bg-green-100"
 
 	if (todo.Completed) {
 		result = fmt.Sprintf("%s border-green-500", result)
@@ -76,9 +95,18 @@ func GetTodoRowClass(todo Todo) string {
 }
 
 templ TodoRow(todo Todo) {
-		<li id={fmt.Sprintf("todo-row-%d", todo.Id)} class={GetTodoRowClass(todo)}>
+		<li
+		 id={fmt.Sprintf("todo-row-%d", todo.Id)} class={GetTodoRowClass(todo)}
+		 hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
+		 hx-indicator="#loading-indicator"
+		 hx-trigger="click"
+		 hx-swap="outerHTML"
+		 hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
+		 hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}>
+
 				<div class="flex items-center justify-between">
 						<div class="flex items-center">
+
 								<input
 										type="checkbox"
 										hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
@@ -103,19 +131,9 @@ templ TodoRow(todo Todo) {
 										}
 								</div>
 						</div>
-
-						<div>
-								<label
-										class="cursor-pointer text-red-500 select-none"
-										hx-delete={fmt.Sprintf("/todos/%d", todo.Id)}
-										hx-indicator="#loading-indicator"
-										hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
-										hx-swap="outerHTML"
-								>
-										Remove
-								</label>
-						</div>
+						@TrashIcon(todo)
 				</div>
+
 		</li>
 }
 
