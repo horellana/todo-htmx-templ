@@ -1,0 +1,9 @@
+CREATE TABLE todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL CHECK(length(name) > 0),
+    completed int,
+    completedAt DATETIME,
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deletedAt DATETIME
+);

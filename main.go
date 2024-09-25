@@ -9,28 +9,35 @@ import (
 	"log/slog"
 	"net/http"
 	schema "github.com/gorilla/schema"
+
+	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
+	sqlbuilder "github.com/Masterminds/squirrel"
 )
 
 const INPUT_PLACEHOLDER = "Try 'Buying Milk'"
 
 type Todo struct {
-	Id int
-	Name string
-	Completed bool
-	CompletedAt string
+	Id int `db:"id"`
+	Name string `db:"name"`
+	Completed bool `db:"completed"`
+	CompletedAt *string `db:"completedAt"`
+	CreatedAt string `db:"createdAt"`
+	UpdatedAt string `db:"updatedAt"`
+	DeletedAt *string `db:"deletedAt"`
 }
+
+var now = time.Now().Format("2006-01-02 15:04:05")
 
 var TODOS = []Todo{
 	{
 		Id: 1,
 		Name: "Todo 1",
-		Completed: false,
 	},
 	{
 		Id: 2,
 		Name: "Todo 2",
-		Completed: true,
-		CompletedAt: time.Now().Format("2006-01-02 15:04:05"),
+		CompletedAt: &now,
 	},
 }
 
@@ -42,59 +49,159 @@ type CreateTodoPayload struct {
 	Name string `schema:name`
 }
 
-func ListTodos() []Todo {
-	return TODOS
-}
+func ConnectToDatabase(connectionString string) (*sqlx.DB, error) {
+	db, err := sqlx.Open("sqlite3", connectionString)
 
-func RemoveTodo(todoId int, todos []Todo) []Todo {
-	result := []Todo{}
-
-	for _, todo := range todos {
-		if todo.Id != todoId {
-			result = append(result, todo)
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	TODOS = result
-	return result
+	return db, nil
 }
 
-func UpdateTodo(todoId int, completed bool) Todo {
-	TODOS[todoId - 1].Completed = completed
+func CountTodos(db *sqlx.DB) (int, error) {
+	queryBuilder := sqlbuilder.
+		Select("COUNT(*)").
+		From("todos").
+		Where("deletedAt is null")
+
+	query, parameters, err := queryBuilder.ToSql()
+
+	if err != nil {
+		return 0, err
+	}
+
+	count := 0
+	err = db.Get(&count, query, parameters...)
+
+	return count, err
+}
+
+func ListTodos(db *sqlx.DB) ([]Todo, error) {
+	queryBuilder := sqlbuilder.
+		Select("*").
+		From("todos").
+		Where("deletedAt is null").
+		OrderBy("createdAt ASC")
+
+	query, parameters, err := queryBuilder.ToSql()
+
+	if err != nil {
+		return []Todo{}, err
+	}
+
+	fmt.Println(query)
+
+	todos := []Todo{}
+	err = db.Select(&todos, query, parameters...)
+
+	return todos, err
+}
+
+func RemoveTodo(db *sqlx.DB, todoId int) (int, error) {
+	now := time.Now().Format("2006-01-02 15:04:05")
+
+	queryBuilder := sqlbuilder.
+		Update("todos").
+		Where("id = ?", todoId).
+		Set("updatedAt", now).
+		Set("deletedAt", now)
+
+	query, parameters, err := queryBuilder.ToSql()
+
+	if err != nil {
+		return 0, err
+	}
+
+	_, err = db.Exec(query, parameters...)
+
+	if err != nil {
+		return 0, err
+	}
+
+	count, countErr := CountTodos(db)
+
+	return count, countErr
+}
+
+func UpdateTodo(db *sqlx.DB, todoId int, completed bool) (Todo, error) {
+	now := time.Now().Format("2006-01-02 15:04:05")
+
+	queryBuilder := sqlbuilder.
+		Update("todos").
+		Where("id = ?", todoId).
+		Set("updatedAt", now).
+		Set("completed", completed).
+		Suffix("returning id, name, completed, completedAt, createdAt, updatedAt, deletedAt")
 
 	if (completed) {
-		TODOS[todoId - 1].CompletedAt = time.Now().Format("2006-01-02 15:04:05")
+		queryBuilder = queryBuilder.Set("completedAt", now)
 	} else {
-		TODOS[todoId - 1].CompletedAt = ""
+		queryBuilder = queryBuilder.Set("completedAt", nil)
 	}
 
-	return TODOS[todoId - 1]
-}
+	query, parameters, err := queryBuilder.ToSql()
 
-func CreateTodo(name string) Todo {
-	todo := Todo{
-		Id: len(TODOS) + 1,
-		Name: name,
-		Completed: false,
+	if err != nil {
+		return Todo{}, err
 	}
 
-	TODOS = append(TODOS, todo)
+	todo := Todo{}
+	err = db.Get(&todo, query, parameters...)
 
-	return todo
+	if err != nil {
+		return Todo{}, err
+	}
+
+	return todo, nil
 }
 
-func RootHandler() http.Handler {
+func CreateTodo(db *sqlx.DB, name string) (Todo, error) {
+	queryBuilder := sqlbuilder.
+		Insert("todos").
+		Columns("name", "completed").
+		Values(name, 0).
+		Suffix("returning id, name, completed, completedAt, createdAt, updatedAt, deletedAt")
+
+	query, parameters, err := queryBuilder.ToSql()
+
+	if err != nil {
+		return Todo{}, err
+	}
+
+	todo := Todo{}
+
+	err = db.Get(&todo, query, parameters...)
+
+	slog.Debug("CREATE_TODO", "MESSAGE", query)
+	slog.Debug("CREATE_TODO", "MESSAGE", parameters)
+
+	if err != nil {
+		return Todo{}, err
+	}
+
+	return todo, err
+}
+
+func RootHandler(db *sqlx.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 
-		todos := ListTodos()
+		todos, err := ListTodos(db)
+
+		if err != nil {
+			slog.Error("ROOT_HANDLER", "ERROR", err)
+			http.Error(w, "Internal Error", http.StatusInternalServerError)
+			return
+		}
+
 		component := Index(todos, INPUT_PLACEHOLDER, "")
 
 		component.Render(context.Background(), w)
 	})
 }
 
-func UpdateTodoHandler(decoder *schema.Decoder) http.Handler {
+func UpdateTodoHandler(db *sqlx.DB, decoder *schema.Decoder) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/html")
 
@@ -128,16 +235,21 @@ func UpdateTodoHandler(decoder *schema.Decoder) http.Handler {
 
 		slog.Debug("UPDATE_TODO", "REQUEST_PAYLOAD", payload)
 
-		newTodo := UpdateTodo(todoId, payload.Completed)
+		newTodo, newTodoErr := UpdateTodo(db, todoId, payload.Completed)
+
+		if newTodoErr != nil {
+			slog.Error("ROOT_HANDLER", "ERROR", newTodoErr)
+			http.Error(w, "Internal Error", http.StatusInternalServerError)
+			return
+		}
 
 		component := TodoRow(newTodo)
-
 
 		component.Render(context.Background(), w)
 	})
 }
 
-func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
+func CreateTodoHandler(db *sqlx.DB, decoder *schema.Decoder) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err :=  r.ParseForm()
 
@@ -164,7 +276,13 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 			return
 		}
 
-		todo := CreateTodo(payload.Name)
+		todo, todoErr := CreateTodo(db, payload.Name)
+
+		if todoErr != nil {
+			slog.Error("CREATE_TODO", "ERROR", todoErr)
+			http.Error(w, "Internal Error", http.StatusInternalServerError)
+			return
+		}
 
 		slog.Debug("CREATE_TODO", "MESSAGE", todo)
 
@@ -175,7 +293,7 @@ func CreateTodoHandler(decoder *schema.Decoder) http.Handler {
 	})
 }
 
-func DeleteTodoHandler(decoder *schema.Decoder) http.Handler {
+func DeleteTodoHandler(db *sqlx.DB, decoder *schema.Decoder) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		todoId, todoIdErr := strconv.Atoi(r.PathValue("id"))
 
@@ -186,11 +304,18 @@ func DeleteTodoHandler(decoder *schema.Decoder) http.Handler {
 			return
 		}
 
-		todos := RemoveTodo(todoId, TODOS)
+		todosCount, err := RemoveTodo(db, todoId)
+
+		if err != nil {
+			slog.Error("DELETE_TODO_HANDLER", "ERROR", err)
+			http.Error(w, "Internal Error", http.StatusInternalServerError)
+			return
+		}
+
 		slog.Error("DELETE_TODO", "TODO_ID", todoId)
 
 		w.Header().Add("Content-Type", "text/html")
-		RemoveTodoOOB(todoId, todos).Render(context.Background(), w)
+		RemoveTodoOOB(todoId, todosCount).Render(context.Background(), w)
 	})
 }
 
@@ -205,15 +330,21 @@ func main() {
 	decoder := schema.NewDecoder()
 
 	server := http.NewServeMux()
+	db, err := ConnectToDatabase("todos.db")
+
+	if err != nil {
+		slog.Error("CONNECT_DATABASE", "MESSAGE", err)
+		return
+	}
 
 	staticFilesHandler := http.FileServer(http.Dir("./static"))
 
 	server.Handle("/static/", http.StripPrefix("/static", staticFilesHandler))
 
-	server.Handle("GET /todos", RootHandler())
-	server.Handle("POST /todos", CreateTodoHandler(decoder))
-	server.Handle("PUT /todos/{id}", UpdateTodoHandler(decoder))
-	server.Handle("DELETE /todos/{id}", DeleteTodoHandler(decoder))
+	server.Handle("GET /todos", RootHandler(db))
+	server.Handle("POST /todos", CreateTodoHandler(db, decoder))
+	server.Handle("PUT /todos/{id}", UpdateTodoHandler(db, decoder))
+	server.Handle("DELETE /todos/{id}", DeleteTodoHandler(db, decoder))
 
 	port := os.Getenv("PORT")
 
