@@ -76,8 +76,6 @@ func ListTodos(db *sqlx.DB) ([]Todo, error) {
 		return []Todo{}, err
 	}
 
-	fmt.Println(query)
-
 	todos := []Todo{}
 	err = db.Select(&todos, query, parameters...)
 
