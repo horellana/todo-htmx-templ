@@ -1,0 +1,9 @@
+package main
+
+templ RemoveTodoOOB(todoId int, count int) {
+	if count < 1 {
+		<div hx-swap-oob="innerText:#todo-list-label">
+			No TODOS available
+		</div>
+	}
+}

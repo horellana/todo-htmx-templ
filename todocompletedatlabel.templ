@@ -1,0 +1,11 @@
+package main
+
+templ TodoCompletedAtLabel(todo Todo) {
+	if todo.Completed && todo.CompletedAt != nil && *todo.CompletedAt != "" {
+		<p>
+			<label class="text-sm text-gray-500 ml-5 mt-2">
+				Completed at { *todo.CompletedAt }
+			</label>
+		</p>
+	}
+}

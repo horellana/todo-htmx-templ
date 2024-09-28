@@ -1,0 +1,19 @@
+package main
+
+templ TodoList(todos []Todo) {
+	<div>
+		<p id="todo-list-label" class="text-center p-4 mb-4">
+			if len(todos) > 0 {
+				Todos
+			} else {
+				No TODOS available
+			}
+		</p>
+
+		<ul id="todo-list">
+			for _, todo := range todos {
+				@TodoRow(todo)
+			}
+		</ul>
+	</div>
+}

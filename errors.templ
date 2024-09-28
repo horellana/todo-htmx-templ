@@ -1,0 +1,17 @@
+package main
+
+templ ValidationError(message string) {
+	<p id="validation-error" class="mt-2 text-center">
+		<label class="text-red-500">
+			{ message }
+		</label>
+	</p>
+}
+
+templ NewTodoErrorOOB(inputPlaceholder string, errorMessage string) {
+	@TodoInput(inputPlaceholder, "")
+
+	<div hx-swap-oob="outerHTML:#validation-error">
+		@ValidationError(errorMessage)
+	</div>
+}

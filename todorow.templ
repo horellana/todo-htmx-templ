@@ -1,0 +1,26 @@
+package main
+
+func GetTodoRowClass(todo Todo) string {
+	result := "border-2 p-4 mb-1 hover:bg-green-100"
+
+	if (todo.CompletedAt != nil && *todo.CompletedAt != "") {
+		result = fmt.Sprintf("%s border-green-500", result)
+	}
+
+	return result
+}
+
+templ TodoRow(todo Todo) {
+		<li id={fmt.Sprintf("todo-row-%d", todo.Id)} class={GetTodoRowClass(todo)}>
+				<div class="flex items-center justify-between">
+						<div class="flex items-center">
+								<div>
+										@TodoCheckbox(todo)
+										@TodoLabel(todo)
+										@TodoCompletedAtLabel(todo)
+								</div>
+						</div>
+						@TrashIcon(todo)
+				</div>
+		</li>
+}
