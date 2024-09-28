@@ -27,20 +27,6 @@ type Todo struct {
 	DeletedAt *string `db:"deletedAt"`
 }
 
-var now = time.Now().Format("2006-01-02 15:04:05")
-
-var TODOS = []Todo{
-	{
-		Id: 1,
-		Name: "Todo 1",
-	},
-	{
-		Id: 2,
-		Name: "Todo 2",
-		CompletedAt: &now,
-	},
-}
-
 type UpdateTodoPayload struct {
 	Completed bool `schema:completed`
 }
