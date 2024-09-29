@@ -1,5 +1,0 @@
-<div><p id=\"todo-list-label\" class=\"text-center p-4 mb-4\">
-Todos
-No TODOS available
-</p><ul id=\"todo-list\">
-</ul></div>

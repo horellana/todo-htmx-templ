@@ -1,2 +1,0 @@
-<div hx-swap-oob=\"innerHTML:#todo-list-label\">Todos</div><div hx-swap-oob=\"beforeend:#todo-list\">
-</div><div hx-swap-oob=\"delete:#validation-error\"></div>
