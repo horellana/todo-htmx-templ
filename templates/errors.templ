@@ -10,7 +10,6 @@ templ ValidationError(message string) {
 
 templ NewTodoErrorOOB(inputPlaceholder string, errorMessage string) {
 	@TodoInput(inputPlaceholder, "")
-
 	<div hx-swap-oob="outerHTML:#validation-error">
 		@ValidationError(errorMessage)
 	</div>

@@ -1,20 +1,14 @@
 package templates
 
-import (
-	. "todo.app/models"
-)
+import . "todo.app/models"
 
 templ NewTodoOOB(inputPlaceholder string, todo Todo) {
 	@TodoInput(inputPlaceholder, "")
-
 	<div hx-swap-oob="innerHTML:#todo-list-label">
 		Todos
 	</div>
-
 	<div hx-swap-oob="beforeend:#todo-list">
 		@TodoRow(todo)
 	</div>
-
-	<div hx-swap-oob="delete:#validation-error">
-	</div>
+	<div hx-swap-oob="delete:#validation-error"></div>
 }

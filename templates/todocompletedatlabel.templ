@@ -1,8 +1,6 @@
 package templates
 
-import (
-	.	"todo.app/models"
-)
+import . "todo.app/models"
 
 templ TodoCompletedAtLabel(todo Todo) {
 	if todo.Completed && todo.CompletedAt != nil && *todo.CompletedAt != "" {

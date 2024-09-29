@@ -14,6 +14,9 @@ build-gocode:
 		go get
 		go build .
 
+format-templ:
+		templ fmt templates
+
 build:
 		$(MAKE) build-templ
 		$(MAKE) build-tailwindcss

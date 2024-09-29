@@ -1,8 +1,6 @@
 package templates
 
-import (
-	. "todo.app/models"
-)
+import . "todo.app/models"
 
 templ TodoList(todos []Todo) {
 	<div>
@@ -13,7 +11,6 @@ templ TodoList(todos []Todo) {
 				No TODOS available
 			}
 		</p>
-
 		<ul id="todo-list">
 			for _, todo := range todos {
 				@TodoRow(todo)

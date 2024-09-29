@@ -8,11 +8,15 @@ import (
 templ TodoCheckbox(todo Todo) {
 	<input
 		type="checkbox"
-		hx-put={fmt.Sprintf("/todos/%d", todo.Id)}
+		hx-put={ fmt.Sprintf("/todos/%d", todo.Id) }
 		hx-indicator="#loading-indicator"
 		hx-trigger="change"
 		hx-swap="outerHTML"
-		hx-vals={fmt.Sprintf("js:{'completed': %t}", !todo.Completed)}
-		hx-target={fmt.Sprintf("#todo-row-%d", todo.Id)}
-		id={fmt.Sprintf("todo-%d", todo.Id)} if todo.Completed { checked } />
+		hx-vals={ fmt.Sprintf("js:{'completed': %t}", !todo.Completed) }
+		hx-target={ fmt.Sprintf("#todo-row-%d", todo.Id) }
+		id={ fmt.Sprintf("todo-%d", todo.Id) }
+		if todo.Completed {
+			checked
+		}
+	/>
 }

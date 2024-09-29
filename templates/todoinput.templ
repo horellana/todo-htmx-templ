@@ -1,18 +1,18 @@
 package templates
 
 templ TodoInput(placeholder string, validationError string) {
-		<div id="todo-input" class="w-full shrink-0">
-			<input
-			 autofocus
-			 type="text"
-			 name="name"
-			 class="w-full text-left border p-4 shrink-0"
-			 placeholder={placeholder}
-			 hx-trigger="keyup[key == 'Enter']"
-			 hx-post="/todos"
-			 hx-swap="outerHTML"
-			 hx-target="#todo-input"
-			 hx-indicator="#loading-indicator"
-			 />
-		</div>
+	<div id="todo-input" class="w-full shrink-0">
+		<input
+			autofocus
+			type="text"
+			name="name"
+			class="w-full text-left border p-4 shrink-0"
+			placeholder={ placeholder }
+			hx-trigger="keyup[key == 'Enter']"
+			hx-post="/todos"
+			hx-swap="outerHTML"
+			hx-target="#todo-input"
+			hx-indicator="#loading-indicator"
+		/>
+	</div>
 }
