@@ -1,0 +1,4 @@
+<p id=\"validation-error\" class=\"mt-2 text-center\"><label class=\"text-red-500\">
+</label></p>
+<div hx-swap-oob=\"outerHTML:#validation-error\">
+</div>

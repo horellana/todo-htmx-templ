@@ -1,11 +1,11 @@
 dev-templ:
-		templ generate --watch --proxy="http://localhost:6000" --cmd="air"
+		PORT=6000 templ generate --watch --proxy="http://localhost:6000" --cmd="air"
 
 dev-tailwindcss:
 		tailwindcss -i input.css -o static/output.css --watch
 
 build-templ:
-		templ generate
+		templ generate -f templates
 
 build-tailwindcss:
 		tailwindcss -i input.css -o static/output.css

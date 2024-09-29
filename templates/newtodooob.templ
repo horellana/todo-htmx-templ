@@ -1,4 +1,8 @@
-package main
+package templates
+
+import (
+	. "todo.app/models"
+)
 
 templ NewTodoOOB(inputPlaceholder string, todo Todo) {
 	@TodoInput(inputPlaceholder, "")

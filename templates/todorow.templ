@@ -1,14 +1,9 @@
-package main
+package templates
 
-func GetTodoRowClass(todo Todo) string {
-	result := "border-2 p-4 mb-1 hover:bg-green-100"
-
-	if (todo.CompletedAt != nil && *todo.CompletedAt != "") {
-		result = fmt.Sprintf("%s border-green-500", result)
-	}
-
-	return result
-}
+import (
+	"fmt"
+	. "todo.app/models"
+)
 
 templ TodoRow(todo Todo) {
 		<li id={fmt.Sprintf("todo-row-%d", todo.Id)} class={GetTodoRowClass(todo)}>

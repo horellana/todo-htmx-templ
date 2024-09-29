@@ -1,0 +1,7 @@
+<input type=\"checkbox\" hx-put=\"
+\" hx-indicator=\"#loading-indicator\" hx-trigger=\"change\" hx-swap=\"outerHTML\" hx-vals=\"
+\" hx-target=\"
+\" id=\"
+\"
+ checked
+>

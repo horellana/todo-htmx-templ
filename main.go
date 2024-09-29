@@ -13,26 +13,19 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	sqlbuilder "github.com/Masterminds/squirrel"
+
+	. "todo.app/templates"
+	. "todo.app/models"
 )
 
 const INPUT_PLACEHOLDER = "Try 'Buying Milk'"
 
-type Todo struct {
-	Id int `db:"id"`
-	Name string `db:"name"`
-	Completed bool `db:"completed"`
-	CompletedAt *string `db:"completedAt"`
-	CreatedAt string `db:"createdAt"`
-	UpdatedAt string `db:"updatedAt"`
-	DeletedAt *string `db:"deletedAt"`
-}
-
 type UpdateTodoPayload struct {
-	Completed bool `schema:completed`
+	Completed bool `schema:"completed"`
 }
 
 type CreateTodoPayload struct {
-	Name string `schema:name`
+	Name string `schema:"name"`
 }
 
 func ConnectToDatabase(connectionString string) (*sqlx.DB, error) {
@@ -314,7 +307,7 @@ func main() {
 	decoder := schema.NewDecoder()
 
 	server := http.NewServeMux()
-	db, err := ConnectToDatabase("todos.db")
+	db, err := ConnectToDatabase("./todos.db")
 
 	if err != nil {
 		slog.Error("CONNECT_DATABASE", "MESSAGE", err)
